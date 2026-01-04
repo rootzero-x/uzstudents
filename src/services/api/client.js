@@ -18,15 +18,16 @@ async function safeJson(res) {
 
 export async function apiPost(path, body, { signal } = {}) {
   const base = withSlash(API_BASE);
-  const cleanPath = String(path).replace(/^\/+/, ""); // faqat boshidagi /
-
+  const cleanPath = String(path).replace(/^\/+/, "");
   const url = base + cleanPath;
-
-  console.debug("[API POST]", url);
 
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+
+    // ✅ MUHIM: session cookie ishlashi uchun
+    credentials: "include",
+
     body: JSON.stringify(body ?? {}),
     signal,
   });
@@ -43,5 +44,4 @@ export async function apiPost(path, body, { signal } = {}) {
 
   return data;
 }
-
 export { API_BASE };

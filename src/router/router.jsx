@@ -12,6 +12,7 @@ import FAQPage from "../pages/FAQ/FAQPage";
 import TermsPage from "../pages/Terms/TermsPage";
 import PrivacyPage from "../pages/Privacy/PrivacyPage";
 import SupportPage from "../pages/Support/SupportPage";
+import NotFoundPage from "../pages/NotFound/NotFoundPage";
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +35,9 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [{ path: "dashboard", element: <DashboardPage /> }],
       },
+
+      // 404 Not Found
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);
