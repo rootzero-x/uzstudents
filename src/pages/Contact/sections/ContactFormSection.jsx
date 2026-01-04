@@ -213,7 +213,7 @@ export default function ContactFormSection() {
         message: sanitizeText(form.message),
       };
 
-      const res = await fetch(`${API_BASE}/api/contact/contact.php`, {
+      const res = await fetch(`${API_BASE}/contact/contact.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
