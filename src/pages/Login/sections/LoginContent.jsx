@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Input from "../../../components/ui/Input";
 import { GoogleLogin } from "@react-oauth/google";
 import { googleLogin, login } from "../../../services/api/auth";
@@ -31,10 +31,10 @@ export default function LoginContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ premium: notice 5 soniyada yo‘qolsin (xohlasang olib tashlasa ham bo‘ladi)
+  // ✅ premium: notice chiroyli yo‘qolsin (layout itarmasdan)
   useEffect(() => {
     if (!notice) return;
-    const t = setTimeout(() => setNotice(""), 5000);
+    const t = setTimeout(() => setNotice(""), 4200);
     return () => clearTimeout(t);
   }, [notice]);
 
@@ -86,21 +86,35 @@ export default function LoginContent() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
-            className="w-full max-w-[520px] rounded-2xl bg-white p-8 shadow-sm ring-1 ring-black/5"
+            className="relative w-full max-w-[520px] rounded-2xl bg-white p-8 shadow-sm ring-1 ring-black/5"
           >
+            {/* ✅ Overlay Notice (layout itarmaydi) */}
+            <div className="pointer-events-none absolute left-4 right-4 top-[80px] z-20 flex justify-center">
+              <AnimatePresence>
+                {notice ? (
+                <motion.div
+                  key="notice"
+                  initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  className="pointer-events-auto w-full max-w-[460px] rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-900 ring-1 ring-emerald-200 shadow-[0_10px_28px_rgba(0,0,0,0.08)]"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {notice}
+                </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
+
+            {/* ✅ content: notice chiqsa ham layout siljimaydi */}
             <div className="text-center">
               <h1 className="text-4xl font-extrabold text-gray-900">Login</h1>
               <p className="mt-2 text-sm text-gray-500">
                 Welcome back. Please enter your details.
               </p>
             </div>
-
-            {/* ✅ Notice banner */}
-            {notice ? (
-              <div className="mt-6 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200">
-                {notice}
-              </div>
-            ) : null}
 
             <form onSubmit={onSubmit} className="mt-8 space-y-5">
               <Input
@@ -136,7 +150,7 @@ export default function LoginContent() {
               />
 
               {err ? (
-                <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-700">
                   {err}
                 </div>
               ) : null}
