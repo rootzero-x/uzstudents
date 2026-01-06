@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Input from "../../../components/ui/Input";
 import { GoogleLogin } from "@react-oauth/google";
@@ -8,27 +8,50 @@ import { useAuth } from "../../../context/AuthContext";
 
 export default function LoginContent() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [notice, setNotice] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+
+  // ✅ Signup’dan kelgan notice'ni ko‘rsatish
+  useEffect(() => {
+    const msg = location.state?.notice;
+    if (msg) {
+      setNotice(String(msg));
+
+      // ✅ state'ni tozalash (reload/back’da qayta chiqmasin)
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ✅ premium: notice 5 soniyada yo‘qolsin (xohlasang olib tashlasa ham bo‘ladi)
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(""), 5000);
+    return () => clearTimeout(t);
+  }, [notice]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setErr("");
 
-    if (!email.trim() || !password) {
+    const em = email.trim();
+
+    if (!em || !password) {
       setErr("Please fill in all fields.");
       return;
     }
 
     try {
       setLoading(true);
-      const data = await login({ email, password });
+      const data = await login({ email: em, password });
       if (data?.user) setUser(data.user);
       navigate("/dashboard");
     } catch (error) {
@@ -71,6 +94,13 @@ export default function LoginContent() {
                 Welcome back. Please enter your details.
               </p>
             </div>
+
+            {/* ✅ Notice banner */}
+            {notice ? (
+              <div className="mt-6 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200">
+                {notice}
+              </div>
+            ) : null}
 
             <form onSubmit={onSubmit} className="mt-8 space-y-5">
               <Input

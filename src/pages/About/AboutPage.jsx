@@ -1,6 +1,7 @@
 import AboutHero from "./sections/AboutHero";
 import AchievementsSection from "./sections/AchievementsSection";
 import GoalsSection from "./sections/GoalsSection";
+import AboutStatsSection from "./sections/AboutStatsSection";
 import AboutCta from "./sections/AboutCta";
 
 export default function AboutPage() {
@@ -9,6 +10,8 @@ export default function AboutPage() {
       <AboutHero />
       <AchievementsSection />
       <GoalsSection />
+      {/* ✅ Promote Collaboration / Stay Ahead va CTA o‘rtasiga stats */}
+      <AboutStatsSection />
       <AboutCta />
     </main>
   );
