@@ -18,6 +18,8 @@ import TermsPage from "../pages/Terms/TermsPage";
 import PrivacyPage from "../pages/Privacy/PrivacyPage";
 import SupportPage from "../pages/Support/SupportPage";
 import NotFoundPage from "../pages/NotFound/NotFoundPage";
+import ForgotPasswordPage from "../pages/ForgotPassword/ForgotPasswordPage";
+
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +42,7 @@ export const router = createBrowserRouter([
         children: [
           { path: "signup", element: <SignUpContent /> },
           { path: "login", element: <LoginContent /> },
+          { path: "forgot-password", element: <ForgotPasswordPage /> },
         ],
       },
 

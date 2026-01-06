@@ -596,9 +596,6 @@ export default function DashboardPage() {
                       <div className="mt-0.5 text-sm font-extrabold text-white">
                         uzstudents.uz
                       </div>
-                      <div className="mt-1 text-xs text-slate-300">
-                        (deployment: /uzstudents/)
-                      </div>
                     </div>
                   </div>
                 </div>

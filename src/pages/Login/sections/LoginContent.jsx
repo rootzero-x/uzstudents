@@ -19,17 +19,24 @@ export default function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  // ✅ Signup’dan kelgan notice'ni ko‘rsatish
-  useEffect(() => {
-    const msg = location.state?.notice;
-    if (msg) {
-      setNotice(String(msg));
+ // ✅ Signup yoki ForgotPassword’dan kelgan notice'ni ko‘rsatish (state + query)
+useEffect(() => {
+  const fromState = location.state?.notice;
 
-      // ✅ state'ni tozalash (reload/back’da qayta chiqmasin)
-      navigate(location.pathname, { replace: true, state: null });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const params = new URLSearchParams(location.search);
+  const fromQuery = params.get("notice");
+
+  const msg = fromState || fromQuery;
+
+  if (msg) {
+    setNotice(String(msg));
+
+    // ✅ state va query'ni tozalash (reload/back’da qayta chiqmasin)
+    navigate(location.pathname, { replace: true, state: null });
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
 
   // ✅ premium: notice chiroyli yo‘qolsin (layout itarmasdan)
   useEffect(() => {
@@ -92,18 +99,18 @@ export default function LoginContent() {
             <div className="pointer-events-none absolute left-4 right-4 top-[80px] z-20 flex justify-center">
               <AnimatePresence>
                 {notice ? (
-                <motion.div
-                  key="notice"
-                  initial={{ opacity: 0, y: -10, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                  transition={{ duration: 0.28, ease: "easeOut" }}
-                  className="pointer-events-auto w-full max-w-[460px] rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-900 ring-1 ring-emerald-200 shadow-[0_10px_28px_rgba(0,0,0,0.08)]"
-                  role="status"
-                  aria-live="polite"
-                >
-                  {notice}
-                </motion.div>
+                  <motion.div
+                    key="notice"
+                    initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                    transition={{ duration: 0.28, ease: "easeOut" }}
+                    className="pointer-events-auto w-full max-w-[460px] rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-900 ring-1 ring-emerald-200 shadow-[0_10px_28px_rgba(0,0,0,0.08)]"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {notice}
+                  </motion.div>
                 ) : null}
               </AnimatePresence>
             </div>
@@ -182,14 +189,27 @@ export default function LoginContent() {
               </div>
 
               <p className="pt-1 text-center text-sm text-gray-600">
-                Don&apos;t have an account?{" "}
-                <Link
-                  to="/signup"
-                  className="font-semibold text-gray-900 underline"
-                >
-                  Sign Up
-                </Link>{" "}
-                <span aria-hidden>↗</span>
+                <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                  <span>Don&apos;t have an account?</span>
+                  <Link
+                    to="/signup"
+                    className="font-semibold text-gray-900 underline"
+                  >
+                    Sign Up
+                  </Link>
+                  <span aria-hidden>↗</span>
+
+                  <span className="mx-1 text-gray-300" aria-hidden>
+                    •
+                  </span>
+
+                  <Link
+                    to="/forgot-password"
+                    className="font-semibold text-gray-900 underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </span>
               </p>
             </form>
           </motion.div>
