@@ -33,8 +33,18 @@ export default function Navbar() {
   const [visible, setVisible] = useState(true);
   const [elevated, setElevated] = useState(false);
 
+  // ✅ Join modal state
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joinErr, setJoinErr] = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
+
   const location = useLocation();
   const { isAuthed } = useAuth();
+
+  const API_BASE =
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://694fc8f1e1918.myxvest1.ru/uzstudents/api";
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
 
@@ -51,7 +61,16 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // ⭐ FINAL GLASS / GRADIENT BLUR (UNCHANGED)
+  // ESC close modal
+  useEffect(() => {
+    if (!joinOpen) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setJoinOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [joinOpen]);
+
   const headerClasses = useMemo(
     () =>
       [
@@ -60,13 +79,50 @@ export default function Navbar() {
         elevated
           ? "bg-white/75 border-white/40 shadow-[0_10px_40px_rgba(15,23,42,0.08)]"
           : "bg-white/60 border-transparent",
-        // 👉 gradient glass overlay
         "before:absolute before:inset-0 before:pointer-events-none",
         "before:bg-gradient-to-b before:from-white/70 before:via-white/30 before:to-white/5",
         "before:opacity-80",
       ].join(" "),
     [elevated]
   );
+
+  const openJoin = () => {
+    setJoinErr("");
+    setJoinCode("");
+    setJoinOpen(true);
+    setMenuOpen(false);
+  };
+
+  const submitJoin = async () => {
+    const code = joinCode.trim().toUpperCase();
+    if (!code) return setJoinErr("Group code kiriting");
+    if (code.length < 6) return setJoinErr("Code noto‘g‘ri ko‘rinadi");
+
+    setJoinErr("");
+    setJoinLoading(true);
+
+    try {
+      // ✅ Sizda student endpoint tayyor bo‘lsa shu ishlaydi
+      const r = await fetch(`${API_BASE}/groups/join/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ code }),
+      });
+
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j?.ok === false) throw new Error(j?.message || "Join failed");
+
+      // ✅ Dashboard yangilansin (event)
+      window.dispatchEvent(new CustomEvent("uzstudents:groups-updated"));
+
+      setJoinOpen(false);
+    } catch (e) {
+      setJoinErr(e?.message || "Network error");
+    } finally {
+      setJoinLoading(false);
+    }
+  };
 
   return (
     <>
@@ -88,10 +144,7 @@ export default function Navbar() {
 
             <nav className="hidden md:flex items-center gap-6 text-sm text-gray-700">
               {isAuthed && (
-                <Link
-                  to="/dashboard"
-                  className="hover:text-gray-900 transition"
-                >
+                <Link to="/dashboard" className="hover:text-gray-900 transition">
                   Dashboard
                 </Link>
               )}
@@ -107,7 +160,7 @@ export default function Navbar() {
             </nav>
           </div>
 
-          {/* DESKTOP: Auth bo'lsa bo'sh (hech narsa chiqmaydi), authed bo'lmasa Sign In/Up */}
+          {/* DESKTOP RIGHT */}
           <div className="hidden md:flex items-center gap-3">
             {!isAuthed ? (
               <>
@@ -122,11 +175,17 @@ export default function Navbar() {
                 </Button>
               </>
             ) : (
-              <div className="w-[1px]" aria-hidden="true" />
+              // ✅ Sign Up o‘rniga Join Group (xuddi shu style)
+              <button
+                onClick={openJoin}
+                className="inline-flex min-w-[120px] items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-[0_14px_40px_rgba(249,115,22,0.22)] hover:bg-orange-600 transition"
+              >
+                Join Group
+              </button>
             )}
           </div>
 
-          {/* MOBILE: Auth bo'lsa Sign In ham yo'q (bo'sh), authed bo'lmasa Sign In bor */}
+          {/* MOBILE RIGHT */}
           <div className="md:hidden flex items-center gap-3">
             {!isAuthed ? (
               <Link
@@ -136,7 +195,12 @@ export default function Navbar() {
                 Sign In
               </Link>
             ) : (
-              <div className="w-[1px]" aria-hidden="true" />
+              <button
+                onClick={openJoin}
+                className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-extrabold text-white hover:bg-orange-600 transition"
+              >
+                Join
+              </button>
             )}
 
             <button
@@ -180,9 +244,6 @@ export default function Navbar() {
                   </Link>
                 ))}
 
-                {/* MOBILE MENU: Authed bo'lmasa Sign Up ham shu yerda chiqsin (xohlasangiz).
-                    Talabingizda "expire bo'lsa oldingidek sign in/up" dedingiz,
-                    shuning uchun mobile menyuga Sign Up qo'shib qo'ydim. */}
                 {!isAuthed && (
                   <Link
                     to="/signup"
@@ -197,6 +258,93 @@ export default function Navbar() {
           )}
         </AnimatePresence>
       </motion.header>
+
+      {/* ✅ JOIN MODAL */}
+      <AnimatePresence>
+        {joinOpen && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="absolute inset-0 bg-black/30"
+              onClick={() => !joinLoading && setJoinOpen(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.98 }}
+              transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+              className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white p-5 shadow-[0_30px_90px_rgba(0,0,0,0.25)] ring-1 ring-slate-200"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-extrabold text-slate-900">
+                    Join Group
+                  </div>
+                  <div className="mt-1 text-xs text-slate-600">
+                    Teacher bergan group code’ni kiriting. (Masalan: BVFPLMZU)
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => !joinLoading && setJoinOpen(false)}
+                  className="rounded-lg px-2 py-1 text-sm font-extrabold text-slate-700 hover:bg-slate-100"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <label className="text-xs font-bold text-slate-700">
+                  Group Code
+                </label>
+                <input
+                  value={joinCode}
+                  onChange={(e) =>
+                    setJoinCode(e.target.value.toUpperCase().replace(/\s/g, ""))
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && submitJoin()}
+                  disabled={joinLoading}
+                  placeholder="BVFPLMZU"
+                  className="mt-2 w-full rounded-xl bg-slate-50 px-4 py-3 text-sm font-extrabold tracking-[0.22em] text-slate-900 ring-1 ring-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                />
+                {joinErr && (
+                  <div className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-700 ring-1 ring-red-100">
+                    ⚠️ {joinErr}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => !joinLoading && setJoinOpen(false)}
+                  className="rounded-xl bg-slate-100 px-4 py-3 text-sm font-extrabold text-slate-800 hover:bg-slate-200 transition"
+                  disabled={joinLoading}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={submitJoin}
+                  disabled={joinLoading}
+                  className="rounded-xl bg-orange-500 px-4 py-3 text-sm font-extrabold text-white shadow-[0_14px_40px_rgba(249,115,22,0.22)] hover:bg-orange-600 transition disabled:opacity-60"
+                >
+                  {joinLoading ? "Joining..." : "Join"}
+                </button>
+              </div>
+
+              <div className="mt-3 text-[11px] text-slate-500">
+                Join so‘rovi yuboriladi. Teacher approve qilgandan keyin group
+                dashboard’da ko‘rinadi.
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

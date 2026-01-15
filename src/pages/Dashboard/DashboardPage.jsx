@@ -82,6 +82,35 @@ export default function DashboardPage() {
   const [blockLeft, setBlockLeft] = useState(null);
   // blockLeft = { totalSec, h, m }
 
+  const [myGroups, setMyGroups] = useState([]);
+const [groupsLoading, setGroupsLoading] = useState(false);
+const [groupsErr, setGroupsErr] = useState("");
+
+const loadMyGroups = async () => {
+  setGroupsErr("");
+  setGroupsLoading(true);
+  try {
+    const r = await fetch(`${API_BASE}/groups/my/`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j?.ok === false) throw new Error(j?.message || "Request failed");
+    setMyGroups(j?.groups || []);
+  } catch (e) {
+    setGroupsErr(e?.message || "Failed to load groups");
+  } finally {
+    setGroupsLoading(false);
+  }
+};
+
+useEffect(() => {
+  // user bor bo‘lsa groupsni yuklaymiz
+  if (user?.id) loadMyGroups();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [user?.id]);
+
+
   const visibleMsgs = useMemo(() => {
     if (showHistory) return aiMsgs;
     const lastN = 6;
@@ -569,6 +598,51 @@ export default function DashboardPage() {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* ✅ My Groups (AI tagida) */}
+<div className="mt-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
+  <div className="flex items-center justify-between gap-2">
+    <h2 className="text-sm font-extrabold text-slate-900">My Groups</h2>
+    <button
+      onClick={loadMyGroups}
+      className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-extrabold text-white hover:bg-slate-800"
+    >
+      Refresh
+    </button>
+  </div>
+
+  {groupsLoading && (
+    <div className="mt-3 text-sm font-bold text-slate-600">Loading…</div>
+  )}
+
+  {groupsErr && (
+    <div className="mt-3 rounded-xl bg-red-50 px-4 py-2 text-xs font-bold text-red-700 ring-1 ring-red-100">
+      ⚠️ {groupsErr}
+    </div>
+  )}
+
+
+  {!groupsLoading && !groupsErr && myGroups.length === 0 && (
+    <div className="mt-3 text-sm text-slate-600">
+      Hozircha group yo‘q. <b>Join</b> orqali kod kiriting.
+    </div>
+  )}
+
+  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+    {myGroups.map((g) => (
+      <div key={g.id} className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+        <div className="text-sm font-extrabold text-slate-900">{g.name}</div>
+        <div className="mt-1 text-xs text-slate-600">
+          Teacher: <b>{g.teacher_name || "—"}</b>
+        </div>
+        <div className="mt-2 inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-slate-200">
+          Code: {g.code}
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
 
               {/* Info block */}
               <div className="mt-4 overflow-hidden rounded-2xl bg-slate-900 p-5 text-white">
