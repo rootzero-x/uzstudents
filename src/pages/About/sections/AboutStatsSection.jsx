@@ -11,9 +11,32 @@ function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 
-function pretty(n) {
-  return new Intl.NumberFormat().format(n);
+function pretty(n, { compact = true } = {}) {
+  const num = Number(n);
+  if (!Number.isFinite(num)) return "0";
+
+  const abs = Math.abs(num);
+
+  // 1000 dan kichik bo'lsa oddiy format
+  if (!compact || abs < 1000) {
+    return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(
+      num
+    );
+  }
+
+  // 1000+ bo'lsa compact: 1K, 1.01K, 1.2M ...
+  const nf = new Intl.NumberFormat(undefined, {
+    notation: "compact",
+    compactDisplay: "short",
+    maximumFractionDigits: abs < 10000 ? 2 : abs < 100000 ? 1 : 0, // 1.01K / 12.3K / 123K
+    minimumFractionDigits: 0,
+  });
+
+  // Ba'zi localelarda 1,01K kabi chiqadi — bu normal.
+  // Agar doim nuqta bo'lsin desang, pastdagi qatorni yoqib qo'yamiz.
+  return nf.format(num);
 }
+
 
 /** CountUp: once when inView */
 function useCountUp(target, { inView = true } = {}) {
